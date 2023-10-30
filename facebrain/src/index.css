@@ -16,3 +16,10 @@ code {
 button {
   cursor: pointer;
 }
+
+.particles {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+}

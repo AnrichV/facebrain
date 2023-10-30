@@ -11,60 +11,38 @@ import Register from "./components/Register/Register";
 
 window.process = {};
 
-const returnClarifaiRequestOptions = (imageUrl) => {
-  // Your PAT (Personal Access Token) can be found in the portal under Authentification
-  const PAT = "c4b34e26bd7b4f86b1fea1e4d67f6aa5";
-  // Specify the correct user_id/app_id pairings
-  // Since you're making inferences outside your app's scope
-  const USER_ID = "anirch";
-  const APP_ID = "facebrain";
-  // Change these to whatever model and image URL you want to use
-  const MODEL_ID = "face-detection";
-  const IMAGE_URL = imageUrl;
-
-  const raw = JSON.stringify({
-    user_app_id: {
-      user_id: USER_ID,
-      app_id: APP_ID,
-    },
-    inputs: [
-      {
-        data: {
-          image: {
-            url: IMAGE_URL,
-          },
-        },
-      },
-    ],
-  });
-
-  const requestOptions = {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      Authorization: "Key " + PAT,
-    },
-    body: raw,
-  };
-
-  return requestOptions;
+const initialState = {
+  input: "",
+  imageUrl: "",
+  box: "",
+  route: "signin",
+  isSignedIn: false,
+  loadUser: "",
+  user: {
+    id: "",
+    name: "",
+    email: "",
+    entries: 0,
+    joined: "",
+  },
 };
-
-// NOTE: MODEL_VERSION_ID is optional, you can also call prediction with the MODEL_ID only
-// https://api.clarifai.com/v2/models/{YOUR_MODEL_ID}/outputs
-// this will default to the latest version_id
-
 class App extends Component {
   constructor() {
     super();
-    this.state = {
-      input: "",
-      imageUrl: "",
-      box: "",
-      route: "signin",
-      isSignedIn: false,
-    };
+    this.state = initialState;
   }
+
+  loadUser = (data) => {
+    this.setState({
+      user: {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        entries: data.entries,
+        joined: data.joined,
+      },
+    });
+  };
 
   calcFaceLocation = (data) => {
     const clarifaiFace =
@@ -88,19 +66,35 @@ class App extends Component {
   };
 
   onButtonSubmit = () => {
+    fetch("http://localhost:3000/imageurl", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        input: this.state.input,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => this.displayFaceBox(this.calcFaceLocation(data)))
+      .then(() => {
+        fetch("http://localhost:3000/image", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: this.state.user.id,
+          }),
+        })
+          .then((response) => response.json())
+          .then((count) => {
+            this.setState(Object.assign(this.state.user, { entries: count }));
+          });
+      })
+      .catch((error) => console.log(error));
     this.setState({ imageUrl: this.state.input });
-    fetch(
-      "https://api.clarifai.com/v2/models/" + "face-detection" + "/outputs",
-      returnClarifaiRequestOptions(this.state.input)
-    )
-      .then((response) => response.json())
-      .then((result) => this.displayFaceBox(this.calcFaceLocation(result)))
-      .catch((err) => console.log(err));
   };
 
   onRouteChange = (route) => {
     if (route === "signout") {
-      this.setState({ isSignedIn: false });
+      this.setState(initialState);
     } else if (route === "home") {
       this.setState({ isSignedIn: true });
     }
@@ -119,20 +113,25 @@ class App extends Component {
         {route === "home" ? (
           <div>
             <Logo />
-            <Rank />
+            <Rank
+              name={this.state.user.name}
+              entries={this.state.user.entries}
+            />
             <ImageLinkForm
               onInputChange={this.onInputChange}
               onButtonSubmit={this.onButtonSubmit}
             />
             <FaceRecognition box={box} imageUrl={imageUrl} />
           </div>
-        ) : route === "signin" ? (
-          <Signin onRouteChange={this.onRouteChange} />
+        ) : route === "signin" || route === "signout" ? (
+          <Signin loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
         ) : (
-          <Register onRouteChange={this.onRouteChange} />
+          <Register
+            loadUser={this.loadUser}
+            onRouteChange={this.onRouteChange}
+          />
         )}
-
-        <ParticlesBg num={200} color="#FFFFFF" type="cobweb" bg={true} />
+        <ParticlesBg type="cobweb" color="ffffff" bg={true} />
       </div>
     );
   }

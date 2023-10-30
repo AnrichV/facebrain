@@ -1,6 +1,10 @@
+.center {
+  display: flex;
+  justify-content: center;
+}
 .form {
+  display: flex;
   width: 700px;
-
   opacity: 0.8;
   background-image: radial-gradient(
       circle at center center,
