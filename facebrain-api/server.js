@@ -7,15 +7,16 @@ import { handleSignin } from "./controllers/signin.js";
 import { handleProfileGet } from "./controllers/profile.js";
 import { handleImage, APIOutput } from "./controllers/image.js";
 const app = express();
-const port = 3000;
 
 const db = knex({
   client: "pg",
   connection: {
-    host: "127.0.0.1",
-    user: "postgres",
-    password: "Bl3nderR@t",
-    database: "facebrain",
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    host: process.env.DATABASE_HOST,
+    user: 5432,
+    password: process.env.DATABASE_PW,
+    database: process.env.DATABASE_DB,
   },
 });
 
