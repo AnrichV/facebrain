@@ -66,7 +66,7 @@ class App extends Component {
   };
 
   onButtonSubmit = () => {
-    fetch("http://localhost:3000/imageurl", {
+    fetch("https://facebrain-backend.onrender.com/imageurl", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -76,7 +76,7 @@ class App extends Component {
       .then((res) => res.json())
       .then((data) => this.displayFaceBox(this.calcFaceLocation(data)))
       .then(() => {
-        fetch("http://localhost:3000/image", {
+        fetch("https://facebrain-backend.onrender.com/image", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
